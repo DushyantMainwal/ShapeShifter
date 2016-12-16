@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.dushyant.shapeshifter.MainActivity">
+
+    <com.intrusoft.library.FrissonView
+        android:id="@+id/frisson_view"
+        android:layout_width="match_parent"
+        android:layout_height="400dp"
+        app:alphaValue="80"
+        app:src="@drawable/dragon"
+        app:tideHeight="50dp"
+        app:tintColor="#1f52a3" />
+
+    <com.dushyant.library.PolygonView
+        android:id="@+id/polygon"
+        android:layout_width="180dp"
+        android:layout_height="180dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="70dp"
+        app:border="true"
+        app:borderColor="#fff"
+        app:borderWidth="5dp"
+        app:rotation="0"
+        app:scaleType="centerCrop"
+        app:sides="7"
+        app:src="@drawable/img" />
+
+    <TextView
+        android:id="@+id/developer_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/polygon"
+        android:layout_marginTop="10dp"
+        android:fontFamily="sans-serif-smallcaps"
+        android:gravity="center"
+        android:text="Dushyant Mainwal"
+        android:textColor="#ffffff"
+        android:textSize="24sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/about"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/developer_name"
+        android:layout_marginTop="5dp"
+        android:fontFamily="sans-serif"
+        android:gravity="center"
+        android:text="Android App Developer | UI UX Designer"
+        android:textColor="#ccffffff"
+        android:textSize="18sp" />
+</RelativeLayout>

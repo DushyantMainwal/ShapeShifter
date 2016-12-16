@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="borderColor" format="color" />
+    <attr name="sides" format="integer" />
+    <attr name="src" format="reference" />
+    <attr name="border" format="boolean" />
+    <attr name="borderWidth" format="dimension" />
+    <attr name="rotation" format="integer" />
+    <attr name="scaleType">
+        <enum name="centerCrop" value="0" />
+        <enum name="fitXY" value="1" />
+    </attr>
+
+    <declare-styleable name="PolygonView">
+        <attr name="borderColor" />
+        <attr name="sides" />
+        <attr name="src" />
+        <attr name="border" />
+        <attr name="borderWidth" />
+        <attr name="rotation" />
+        <attr name="scaleType" />
+    </declare-styleable>
+
+</resources>
