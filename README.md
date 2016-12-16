@@ -1,7 +1,7 @@
 # ShapeShifter
 Provides Polygon shaped imageView
 
-[![API](https://img.shields.io/badge/API-9%2B-blue.svg?style=flat)](https://android-arsenal.com/api?level=9)  [![](https://jitpack.io/v/DushyantMainwal/ShapeShifter.svg)](https://jitpack.io/#DushyantMainwal/ShapeShifter)
+[![API](https://img.shields.io/badge/API-13%2B-blue.svg?style=flat)](https://android-arsenal.com/api?level=9)  [![](https://jitpack.io/v/DushyantMainwal/ShapeShifter.svg)](https://jitpack.io/#DushyantMainwal/ShapeShifter)
 
 ![Screenshot](/screenshot.jpeg)
 
