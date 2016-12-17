@@ -1,7 +1,7 @@
 # ShapeShifter
 Provides Polygon shaped imageView
 
-[![API](https://img.shields.io/badge/API-13%2B-blue.svg?style=flat)](https://android-arsenal.com/api?level=9)  [![](https://jitpack.io/v/DushyantMainwal/ShapeShifter.svg)](https://jitpack.io/#DushyantMainwal/ShapeShifter)
+[![API](https://img.shields.io/badge/API-13%2B-blue.svg?style=flat)](https://android-arsenal.com/api?level=9)  [![](https://jitpack.io/v/DushyantMainwal/ShapeShifter.svg)](https://jitpack.io/#DushyantMainwal/ShapeShifter) [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-ShapeShifter-blue.svg?style=flat)](http://android-arsenal.com/details/1/4866)
 
 ![Screenshot](/screenshot.jpeg)
 
@@ -18,7 +18,7 @@ allprojects {
 Step 2. Add the dependency
 ```groovy
 dependencies {
-  compile 'com.github.DushyantMainwal:ShapeShifter:1.1.0'
+  compile 'com.github.DushyantMainwal:ShapeShifter:1.2.0'
  }
  ```
 # Implementation
