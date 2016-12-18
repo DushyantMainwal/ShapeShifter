@@ -22,7 +22,6 @@
         android:layout_height="180dp"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="70dp"
-        app:border="true"
         app:borderColor="#fff"
         app:borderWidth="5dp"
         app:rotation="0"
