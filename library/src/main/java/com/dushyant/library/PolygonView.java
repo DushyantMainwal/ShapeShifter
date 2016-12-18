@@ -9,92 +9,193 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.support.annotation.ColorInt;
+import android.support.annotation.DrawableRes;
+import android.support.annotation.FloatRange;
+import android.support.annotation.IntDef;
+import android.support.annotation.IntRange;
+import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
+import java.lang.annotation.Retention;
+
+import static java.lang.annotation.RetentionPolicy.SOURCE;
+
 /**
  * Created by Dushyant on 12/16/2016.
+ *          Modified by Bunk3r on 12/17/2016
  */
-
 public class PolygonView extends View {
+    private static final String TAG = "PolygonView";
 
-    private ScaleType scaleType;
-    private int borderColor;
-    private Paint paint;
-    private Path path;
-    private int sides;
-    private int rotateDegree;
-    private float rotateRadian;
-    private int imageResource;
+    private static final int FIT_XY = 0;
+    private static final int CENTER_CROP = 1;
+
+    @Retention(SOURCE)
+    @IntDef(value = {FIT_XY, CENTER_CROP})
+    private @interface ScaleType {}
+
+    private final Paint srcPaint = new Paint();
+    private final Paint paint = new Paint();
+    private final Path path = new Path();
+    private final RectF viewBounds = new RectF();
+    private final RectF scaleRect = new RectF();
+
+    @Nullable
     private Bitmap bitmap;
-    private Float xCorPoly[];
-    private Float yCorPoly[];
-    private RectF viewBounds, scaleRect;
-    private boolean border;
-    private float borderWidth;
 
+    @ScaleType
+    private int scaleType = FIT_XY;
+
+    @ColorInt
+    private int borderColor = Color.TRANSPARENT;
+
+    @IntRange(from = 3)
+    private int sides = 3;
+
+    @IntRange(from = 0,
+              to = 360)
+    private int rotateDegree = 0;
+
+    @FloatRange(from = 1.0f)
+    private float borderWidth = 3.0f;
+
+    @DrawableRes
+    private int imageResource = 0;
+
+    @FloatRange(from = 0.0f)
     private float screenWidth;
+
+    @FloatRange(from = 0.0f)
     private float screenHeight;
-    private float requiredWidth;
-    private float requiredHeight;
-    private int x;
-    private int y;
-
-    public enum ScaleType {
-        CENTRE_CROP(0),
-        FIT_XY(1);
-        final int value;
-
-        ScaleType(int value) {
-            this.value = value;
-        }
-    }
-
-    private static final ScaleType[] scaleTypeArray = {ScaleType.CENTRE_CROP, ScaleType.FIT_XY};
 
     public PolygonView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context, attrs);
     }
 
-    public void sides(int sides) {
-        this.sides = sides;
-    }
-
     private void init(Context context, AttributeSet attr) {
-//        scaleType = ScaleType.CENTRE_CROP;//default
-        try {
+        if (!isInEditMode()) {
             TypedArray typedArray = context.obtainStyledAttributes(attr, R.styleable.PolygonView);
-            borderColor = typedArray.getColor(R.styleable.PolygonView_borderColor, 0);
-            sides = typedArray.getInt(R.styleable.PolygonView_sides, 3);
-            imageResource = typedArray.getResourceId(R.styleable.PolygonView_src, 0);
-            borderWidth = typedArray.getDimension(R.styleable.PolygonView_borderWidth, 3.0f);
-            rotateDegree = typedArray.getInt(R.styleable.PolygonView_rotation, 0);
-            border = typedArray.getBoolean(R.styleable.PolygonView_border, false);
-            scaleType = scaleTypeArray[typedArray.getInt(R.styleable.PolygonView_scaleType, 0)];
+
+            borderColor = typedArray.getColor(R.styleable.PolygonView_borderColor, borderColor);
+            borderWidth = typedArray.getDimension(R.styleable.PolygonView_borderWidth, borderWidth);
+
+            sides = typedArray.getInt(R.styleable.PolygonView_sides, sides);
+            if (sides < 3) {
+                throw new IllegalStateException("You can't have less than 3 sides to form a polygon");
+            }
+
+            imageResource = typedArray.getResourceId(R.styleable.PolygonView_src, imageResource);
+            rotateDegree = typedArray.getInt(R.styleable.PolygonView_rotation, rotateDegree);
+
+            //noinspection ResourceType
+            scaleType = typedArray.getInt(R.styleable.PolygonView_scaleType, scaleType);
+
             typedArray.recycle();
-        } catch (Exception e) {
-            e.printStackTrace();
+
+            if (imageResource != 0) {
+                try {
+                    bitmap = BitmapFactory.decodeResource(context.getResources(), imageResource);
+                } catch (OutOfMemoryError error) {
+                    bitmap = null;
+                    Log.e(TAG, "Image is too large " + error.getMessage());
+                } catch (Exception e) {
+                    Log.e(TAG, e.getMessage());
+                }
+            }
+        } else {
+            // This is for the preview mode
+            borderColor = Color.BLACK;
+            sides = 6;
+            bitmap = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888);
+            bitmap.eraseColor(Color.GRAY);
         }
 
         rotateDegree += 90;
-        paint = new Paint();
+
         paint.setAntiAlias(true);
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(borderWidth);
-        path = new Path();
-        viewBounds = new RectF();
-        scaleRect = new RectF();
-        if (imageResource != 0) {
-            try {
-                bitmap = BitmapFactory.decodeResource(context.getResources(), imageResource);
-            } catch (OutOfMemoryError error) {
-                bitmap = null;
-                Log.e("Image Error: ", "Image is too large " + error.getMessage());
-            } catch (Exception e) {
-                Log.e("Image Error: ", e.getMessage());
+    }
+
+    private void setupConfig() {
+        // In case is set to {@code CENTER_CROP} we need to configure the bounds differently
+        if (scaleType == CENTER_CROP) {
+            setupCenterCrop();
+        }
+
+        // Settings the bounds for the view and for {@code CENTER_CROP}
+        viewBounds.set(0, 0, screenWidth, screenHeight);
+
+        // Settings the color of the border
+        paint.setColor(borderColor);
+
+        // Switches from degrees to radians
+        float rotateRadian = (float) (rotateDegree * (Math.PI / 180));
+
+        // Resets the previous path
+        path.reset();
+
+        //minimum value to set polygon
+        float r = Math.min(screenHeight, screenWidth);
+
+        // Calculates first point
+        float xCorPoly = (float) ((getMeasuredWidth() / 2) + (r / 2) * Math.cos(2 * Math.PI * 0 / sides - rotateRadian));//90deg= 1.5708rad
+        float yCorPoly = (float) ((getMeasuredHeight() / 2) + (r / 2) * Math.sin(2 * Math.PI * 0 / sides - rotateRadian));
+
+        // Sets the start of the path to the first point
+        path.moveTo(xCorPoly, yCorPoly);
+
+        for (int i = 1; i < sides; i++) {
+            xCorPoly = (float) ((getMeasuredWidth() / 2) + (r / 2) * Math.cos(2 * Math.PI * i / sides - rotateRadian));//90deg= 1.5708rad
+            yCorPoly = (float) ((getMeasuredHeight() / 2) + (r / 2) * Math.sin(2 * Math.PI * i / sides - rotateRadian));
+
+            path.lineTo(xCorPoly, yCorPoly);
+
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Point " + i + " (" + xCorPoly + "," + yCorPoly + ")");
             }
+        }
+
+        // Finishes the path
+        path.close();
+    }
+
+    private void setupCenterCrop() {
+        if (bitmap != null) {
+            float ratioChange = 1;
+            final int bitmapWidth = bitmap.getWidth();
+            final int bitmapHeight = bitmap.getHeight();
+
+            if (screenWidth != bitmapWidth) {
+                ratioChange = screenWidth / bitmapWidth;
+            }
+
+            if (ratioChange * bitmapHeight < screenHeight) {
+                ratioChange = screenHeight / bitmapHeight;
+            }
+
+            final float requiredWidth = bitmapWidth * ratioChange;
+            final float requiredHeight = bitmapHeight * ratioChange;
+            float x = (int) ((requiredWidth / 2) - (screenWidth / 2));
+            float y = (int) ((requiredHeight / 2) - (screenHeight / 2));
+
+            x = x <= 0 ? x : -x;
+            y = y <= 0 ? y : -y;
+
+            scaleRect.set(x, y, x + requiredWidth, y + requiredHeight);
+        }
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+
+        if (changed) {
+            setupConfig();
         }
     }
 
@@ -103,60 +204,22 @@ public class PolygonView extends View {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         screenWidth = getMeasuredWidth();
         screenHeight = getMeasuredHeight();
-        if (bitmap != null && scaleType == ScaleType.CENTRE_CROP) {
-            float ratioChange = 1;
-            if (screenWidth != bitmap.getWidth()) {
-                ratioChange = screenWidth / bitmap.getWidth();
-            }
-            if (ratioChange * bitmap.getHeight() < screenHeight) {
-                ratioChange = screenHeight / bitmap.getHeight();
-            }
-            requiredHeight = bitmap.getHeight() * ratioChange;
-            requiredWidth = bitmap.getWidth() * ratioChange;
-            y = (int) ((requiredHeight / 2) - (screenHeight / 2));
-            x = (int) ((requiredWidth / 2) - (screenWidth / 2));
-            if (x > 0) x = -x;
-            if (y > 0) y = -y;
-        }
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        xCorPoly = new Float[sides];
-        yCorPoly = new Float[sides];
 
-        float r = Math.min(screenHeight, screenWidth);//minimum value to set polygon
-        viewBounds.set(0, 0, screenWidth, screenHeight);
-
-        if (borderColor != 0) {
-            paint.setColor(borderColor);
-        } else paint.setColor(Color.BLACK);
-
-        rotateRadian = (float) (rotateDegree * (Math.PI / 180));
-        for (int i = 0; i < sides; i++) {
-            xCorPoly[i] = (float) ((getMeasuredWidth() / 2) + (r / 2) * Math.cos(2 * Math.PI * i / sides - rotateRadian));//90deg= 1.5708rad
-            yCorPoly[i] = (float) ((getMeasuredHeight() / 2) + (r / 2) * Math.sin(2 * Math.PI * i / sides - rotateRadian));
-            System.out.print("Point " + i + " (" + xCorPoly[i] + "," + yCorPoly[i] + ") \n");
-        }
-
-        path.moveTo(xCorPoly[0], yCorPoly[0]);
-        for (int i = 1; i < sides; i++) {
-            path.lineTo(xCorPoly[i], yCorPoly[i]);
-        }
-        path.close();
         canvas.clipPath(path);
         if (bitmap != null) {
-            if (scaleType == ScaleType.CENTRE_CROP) {
-                scaleRect.set(x, y, x + requiredWidth, y + requiredHeight);
+            if (scaleType == CENTER_CROP) {
                 canvas.clipRect(scaleRect);
-                canvas.drawBitmap(bitmap, null, scaleRect, paint);
+                canvas.drawBitmap(bitmap, null, scaleRect, srcPaint);
             } else {
-                canvas.drawBitmap(bitmap, null, viewBounds, paint);
+                canvas.drawBitmap(bitmap, null, viewBounds, srcPaint);
             }
-            canvas.drawPath(path, paint);
         }
-        if (border)
-            canvas.drawPath(path, paint);
+
+        canvas.drawPath(path, paint);
     }
 }

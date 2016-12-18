@@ -3,7 +3,6 @@
     <attr name="borderColor" format="color" />
     <attr name="sides" format="integer" />
     <attr name="src" format="reference" />
-    <attr name="border" format="boolean" />
     <attr name="borderWidth" format="dimension" />
     <attr name="rotation" format="integer" />
     <attr name="scaleType">
@@ -15,7 +14,6 @@
         <attr name="borderColor" />
         <attr name="sides" />
         <attr name="src" />
-        <attr name="border" />
         <attr name="borderWidth" />
         <attr name="rotation" />
         <attr name="scaleType" />
