@@ -21,6 +21,25 @@ dependencies {
   compile 'com.github.DushyantMainwal:ShapeShifter:2.1.0'
  }
  ```
+ 
+ ###Java Implementation:
+```java
+        polygonView = (PolygonView) findViewById(R.id.polygon);
+        
+        //true if you want to set Border
+        polygonView.setBorder(true);
+        //to set width of Border
+        polygonView.setBorderWidth(10);
+        //to set Image Resource
+        polygonView.setImageSource(R.drawable.dragon);
+        //to rotate the View
+        polygonView.setRotateDegree(0);
+        //to set Sides of the Polygon
+        polygonView.setSides(7);
+        //to set Scale Type
+        polygonView.setScaleType(PolygonView.ScaleType.CENTRE_CROP);
+```
+
 # Implementation
 ###XML Implementation:
 ```xml
