@@ -9,6 +9,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.support.annotation.DrawableRes;
+import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -40,6 +42,7 @@ public class PolygonView extends View {
     private float requiredHeight;
     private int x;
     private int y;
+    private Context context;
 
     public enum ScaleType {
         CENTRE_CROP(0),
@@ -53,6 +56,11 @@ public class PolygonView extends View {
 
     private static final ScaleType[] scaleTypeArray = {ScaleType.CENTRE_CROP, ScaleType.FIT_XY};
 
+    public PolygonView(Context context) {
+        super(context);
+        init(context, null);
+    }
+
     public PolygonView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context, attrs);
@@ -63,26 +71,29 @@ public class PolygonView extends View {
     }
 
     private void init(Context context, AttributeSet attr) {
-//        scaleType = ScaleType.CENTRE_CROP;//default
-        try {
-            TypedArray typedArray = context.obtainStyledAttributes(attr, R.styleable.PolygonView);
-            borderColor = typedArray.getColor(R.styleable.PolygonView_borderColor, 0);
-            sides = typedArray.getInt(R.styleable.PolygonView_sides, 3);
-            imageResource = typedArray.getResourceId(R.styleable.PolygonView_src, 0);
-            borderWidth = typedArray.getDimension(R.styleable.PolygonView_borderWidth, 3.0f);
-            rotateDegree = typedArray.getInt(R.styleable.PolygonView_rotation, 0);
-            border = typedArray.getBoolean(R.styleable.PolygonView_border, false);
-            scaleType = scaleTypeArray[typedArray.getInt(R.styleable.PolygonView_scaleType, 0)];
-            typedArray.recycle();
-        } catch (Exception e) {
-            e.printStackTrace();
+        this.context = context;
+        if (attr != null) {
+            try {
+                TypedArray typedArray = context.obtainStyledAttributes(attr, R.styleable.PolygonView);
+                borderColor = typedArray.getColor(R.styleable.PolygonView_borderColor, 0);
+                sides = typedArray.getInt(R.styleable.PolygonView_sides, 3);
+                imageResource = typedArray.getResourceId(R.styleable.PolygonView_src, 0);
+                borderWidth = typedArray.getDimension(R.styleable.PolygonView_borderWidth, 3.0f);
+                rotateDegree = typedArray.getInt(R.styleable.PolygonView_rotation, 0);
+                border = typedArray.getBoolean(R.styleable.PolygonView_border, false);
+                scaleType = scaleTypeArray[typedArray.getInt(R.styleable.PolygonView_scaleType, 0)];
+                typedArray.recycle();
+                if (sides < 3) {
+                    sides = 3;
+                    throw new IllegalStateException("Sides must be greater than 2");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-
         rotateDegree += 90;
         paint = new Paint();
         paint.setAntiAlias(true);
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeWidth(borderWidth);
         path = new Path();
         viewBounds = new RectF();
         scaleRect = new RectF();
@@ -123,9 +134,12 @@ public class PolygonView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
         xCorPoly = new Float[sides];
         yCorPoly = new Float[sides];
-
+        if (!border) borderWidth = 0;
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(borderWidth);
         float r = Math.min(screenHeight, screenWidth);//minimum value to set polygon
         viewBounds.set(0, 0, screenWidth, screenHeight);
 
@@ -156,7 +170,75 @@ public class PolygonView extends View {
             }
             canvas.drawPath(path, paint);
         }
-        if (border)
-            canvas.drawPath(path, paint);
+    }
+
+    /**
+     * @param resId is drawable resource Id of image
+     */
+    public void setImageSource(@DrawableRes int resId) {
+        this.imageResource = resId;
+        if (imageResource != 0) {
+            try {
+                bitmap = BitmapFactory.decodeResource(context.getResources(), imageResource);
+            } catch (OutOfMemoryError error) {
+                bitmap = null;
+                Log.e("Image Error: ", "Image is too large " + error.getMessage());
+            } catch (Exception e) {
+                Log.e("Image Error: ", e.getMessage());
+            }
+        }
+        invalidate();
+    }
+
+
+    /**
+     * @param sides of the polygon: must be greater than 2
+     */
+    public void setSides(@NonNull int sides) {
+        this.sides = sides;
+        invalidate();
+    }
+
+    /**
+     * @param degree of the polygon
+     */
+    public void setRotateDegree(int degree) {
+        this.rotateDegree = degree;
+        invalidate();
+    }
+
+    /**
+     * @param scaleType of the image
+     *                  :
+     *                  CENTER_CROP
+     *                  AND FIT_XY
+     */
+    public void setScaleType(@NonNull ScaleType scaleType) {
+        this.scaleType = scaleType;
+        invalidate();
+    }
+
+    /**
+     * @param border of the Polygon
+     */
+    public void setBorder(@NonNull boolean border) {
+        this.border = border;
+        invalidate();
+    }
+
+    /**
+     * @param borderColor of the Polygon
+     */
+    public void setBorderColor(@NonNull int borderColor) {
+        this.borderColor = borderColor;
+        invalidate();
+    }
+
+    /**
+     * @param borderWidth of the Polygon
+     */
+    public void setBorderWidth(@NonNull float borderWidth) {
+        this.borderWidth = borderWidth;
+        invalidate();
     }
 }

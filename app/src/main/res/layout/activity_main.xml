@@ -27,7 +27,7 @@
         app:borderWidth="5dp"
         app:rotation="0"
         app:scaleType="centerCrop"
-        app:sides="7"
+        app:sides="8"
         app:src="@drawable/img" />
 
     <TextView
