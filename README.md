@@ -44,6 +44,7 @@ dependencies {
 
 ###Java Implementation:
 ```java
+        //xml polygon view
         polygonView = (PolygonView) findViewById(R.id.polygon);
         
         //true if you want to set Border
